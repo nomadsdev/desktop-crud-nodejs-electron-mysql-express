@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Data recording system</title>
+</head>
+<body>
+  <h1>Data recording system</h1>
+  
+  <form id="employeeForm">
+    <label for="name">name :</label>
+    <input type="text" id="name" required>
+
+    <label for="occupation">position :</label>
+    <input type="text" id="occupation" required>
+
+    <label for="salary">salary :</label>
+    <input type="number" id="salary" required>
+
+    <button type="button" onclick="saveData()">Save</button>
+  </form>
+
+  <h2>Data information</h2>
+  <ul id="employeeList"></ul>
+
+  <script>
+    function saveData() {
+      var name = document.getElementById('name').value;
+      var occupation = document.getElementById('occupation').value;
+      var salary = document.getElementById('salary').value;
+
+      fetch('http://localhost:3000/saveData', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ name, occupation, salary }),
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (data.success) {
+          alert('Data has been recorded successfully.');
+          fetchEmployeeList();
+        } else {
+          alert('An error occurred while saving data.');
+        }
+      });
+    }
+
+    function fetchEmployeeList() {
+      fetch('http://localhost:3000/getEmployeeList')
+      .then(response => response.json())
+      .then(data => {
+        var employeeList = document.getElementById('employeeList');
+        employeeList.innerHTML = '';
+
+        data.forEach(employee => {
+          var listItem = document.createElement('li');
+          listItem.textContent = `name : ${employee.name}, position : ${employee.occupation}, salary : ${employee.salary}`;
+          
+          var deleteButton = document.createElement('button');
+          deleteButton.textContent = 'Delete';
+          deleteButton.onclick = function() {
+            deleteEmployee(employee.id);
+          };
+
+          listItem.appendChild(deleteButton);
+          employeeList.appendChild(listItem);
+        });
+      });
+    }
+
+    function deleteEmployee(employeeId) {
+      fetch(`http://localhost:3000/deleteEmployee/${employeeId}`, {
+        method: 'DELETE',
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (data.success) {
+          alert('Data has been successfully deleted.');
+          fetchEmployeeList();
+        } else {
+          alert('An error occurred deleting data.');
+        }
+      });
+    }
+    document.addEventListener('DOMContentLoaded', fetchEmployeeList);
+  </script>
+</body>
+</html>
